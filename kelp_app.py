@@ -1,8 +1,9 @@
 """
-KELP Lab Financial Simulator
+KELP Environmental Laboratory - Comprehensive Financial Model
 
-A comprehensive Streamlit application for modeling revenues, costs, break-even analysis,
-and multi-year forecasts for analytical water-testing laboratories.
+A complete Streamlit application for modeling all aspects of running an environmental 
+testing laboratory, including startup costs, operations, regulatory compliance, 
+equipment requirements, and multi-year financial projections.
 
 Dependencies: streamlit, pandas, numpy, altair
 Python version: >=3.9
@@ -16,508 +17,494 @@ from datetime import datetime
 
 # Page configuration
 st.set_page_config(
-    page_title="KELP Lab Financial Model",
+    page_title="KELP Environmental Lab Financial Model",
     page_icon="🧪",
     layout="wide",
 )
 
-# Default values for all inputs
+# Comprehensive default values based on research
 defaults = {
-    "company_name": "KELP Laboratory LLC",
+    # Company Info
+    "company_name": "KELP Environmental Laboratory LLC",
     "launch_year": datetime.now().year,
-    "num_director": 1,
-    "director_sal": 120000,
-    "num_scientist": 2,
-    "scientist_sal": 75000,
-    "num_tech": 3,
-    "tech_sal": 50000,
-    "num_admin": 1.0,
-    "admin_sal": 45000,
-    "benefit_load": 25,
-    "lab_rent": 15000,
-    "instr_lease": 8000,
-    "utilities": 3000,
-    "argon_packs": 2,
-    "argon_price": 800,
-    "service_contr": 4000,
-    "insurance": 2500,
-    "cleaning": 1200,
-    "it_lims": 2000,
-    "regulatory": 1500,
-    "other_fixed": 2000,
-    "avg_revenue": 180,
-    "variable_cost": 25,
-    "monthly_samples": 500,
+    "location": "California",
+    
+    # Facility & Infrastructure (Based on lab fit-out costs $771-$986 psf)
+    "lab_size_sqft": 5000,
+    "lab_fitout_cost_per_sqft": 850,
+    "monthly_rent_per_sqft": 3.50,
+    "utilities_monthly": 8000,
+    "lab_cleaning": 2500,
+    "waste_disposal": 4000,
+    
+    # Major Equipment (Based on ICP-MS $50k-$250k, other equipment)
+    "icp_ms_cost": 180000,
+    "gc_ms_cost": 120000,
+    "hplc_cost": 80000,
+    "microscopy_cost": 45000,
+    "sample_prep_equipment": 60000,
+    "lab_furniture": 40000,
+    "other_equipment": 85000,
+    
+    # Equipment Financing & Maintenance
+    "equipment_financing_rate": 5.5,
+    "equipment_financing_years": 7,
+    "annual_maintenance_percent": 12,
+    "equipment_replacement_reserve": 8,
+    
+    # Staffing (Research-based salaries)
+    "laboratory_director": 1,
+    "director_salary": 150000,
+    "senior_scientists": 2,
+    "scientist_salary": 85000,
+    "lab_technicians": 4,
+    "technician_salary": 55000,
+    "quality_manager": 1,
+    "qa_manager_salary": 95000,
+    "admin_staff": 1.5,
+    "admin_salary": 48000,
+    "benefits_percent": 28,
+    
+    # Certification & Compliance
+    "nelap_certification_cost": 15000,
+    "annual_nelap_renewal": 8000,
+    "state_certification_costs": 12000,
+    "proficiency_testing_annual": 25000,
+    "quality_system_consultant": 18000,
+    
+    # Laboratory Consumables & Operations
+    "reagents_monthly": 12000,
+    "reference_standards": 8000,
+    "gases_monthly": 3500,
+    "labware_consumables": 6000,
+    "maintenance_contracts": 15000,
+    
+    # IT & Data Management
+    "lims_system_annual": 24000,
+    "it_infrastructure": 8000,
+    "data_backup_security": 3600,
+    "software_licenses": 12000,
+    
+    # Insurance & Legal
+    "general_liability": 4500,
+    "professional_liability": 6000,
+    "property_insurance": 3200,
+    "workers_comp": 8500,
+    "legal_regulatory": 12000,
+    
+    # Testing Pricing (Market research-based)
+    "pfas_test_price": 450,
+    "metals_analysis_price": 180,
+    "microbiology_price": 85,
+    "voc_analysis_price": 220,
+    "general_chemistry_price": 120,
+    "specialty_testing_price": 350,
+    
+    # Sample Volume & Mix
+    "monthly_samples": 800,
+    "pfas_percent": 15,
+    "metals_percent": 35,
+    "microbiology_percent": 25,
+    "voc_percent": 15,
+    "general_chem_percent": 8,
+    "specialty_percent": 2,
+    
+    # Variable Costs per Sample Type
+    "pfas_variable_cost": 75,
+    "metals_variable_cost": 25,
+    "microbiology_variable_cost": 15,
+    "voc_variable_cost": 35,
+    "general_chem_variable_cost": 18,
+    "specialty_variable_cost": 65,
 }
 
-# Initialize session state for non-widget keys
-if 'cost_from_csv' not in st.session_state:
-    st.session_state.cost_from_csv = 0
-if 'reagents_from_csv' not in st.session_state:
-    st.session_state.reagents_from_csv = 0
-if 'analyte_prices' not in st.session_state:
-    st.session_state.analyte_prices = {}
+# Initialize session state
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-# Title
-st.title("🧪 KELP Lab Financial Simulator")
+# Title and Introduction
+st.title("🧪 KELP Environmental Laboratory")
+st.subheader("Comprehensive Financial Model for Environmental Testing Operations")
 
-# Sidebar
-st.sidebar.header("Configuration")
+with st.expander("ℹ️ About This Model"):
+    st.markdown("""
+    This financial model is designed specifically for environmental testing laboratories and includes:
+    
+    **🏗️ Startup & Infrastructure**: Lab buildout, equipment procurement, certification costs
+    
+    **🔬 Operations**: Staffing, consumables, maintenance, regulatory compliance
+    
+    **📊 Revenue Modeling**: Test-specific pricing based on market rates for PFAS, metals, microbiology, etc.
+    
+    **📈 Growth Projections**: Multi-year forecasts with industry-specific growth rates
+    
+    **💰 Break-even Analysis**: Understanding the volume needed to achieve profitability
+    
+    *Data based on 2025 industry research including equipment costs, salary surveys, and market pricing.*
+    """)
+
+# Sidebar Configuration
+st.sidebar.header("🔧 Laboratory Configuration")
 
 # Reset button
 if st.sidebar.button("🔄 Reset to Defaults", type="secondary"):
-    for key in defaults.keys():
-        if key in st.session_state:
-            st.session_state[key] = defaults[key]
-    st.session_state.cost_from_csv = 0
-    st.session_state.reagents_from_csv = 0
-    st.session_state.analyte_prices = {}
+    for key, value in defaults.items():
+        st.session_state[key] = value
     st.rerun()
 
-# CSV Upload - Operating Budget
-st.sidebar.subheader("📊 Operating Budget CSV (Optional)")
-csv_file = st.sidebar.file_uploader(
-    "Upload operating budget CSV", 
-    type="csv", 
-    key="csv_file",
-    help="CSV with columns: 'Name' and 'Monthly USD'"
-)
+# Company Information
+st.sidebar.subheader("🏢 Company Information")
+company_name = st.sidebar.text_input("Laboratory Name", key="company_name")
+launch_year = st.sidebar.number_input("Launch Year", min_value=2020, max_value=2030, key="launch_year")
+location = st.sidebar.selectbox("Primary Location", 
+    ["California", "Texas", "Florida", "New York", "Illinois", "Pennsylvania", "Other"], 
+    key="location")
 
-if csv_file is not None:
-    try:
-        df = pd.read_csv(csv_file)
-        if 'Name' in df.columns and 'Monthly USD' in df.columns:
-            st.session_state.cost_from_csv = df['Monthly USD'].sum()
-            
-            # Identify reagents/consumables
-            reagent_keywords = ["consumable", "reagent", "media", "chem"]
-            reagent_mask = df['Name'].str.lower().str.contains('|'.join(reagent_keywords), na=False)
-            st.session_state.reagents_from_csv = df.loc[reagent_mask, 'Monthly USD'].sum()
-            
-            st.sidebar.success(f"✅ Loaded ${st.session_state.cost_from_csv:,.0f}/mo from CSV")
-        else:
-            st.sidebar.error("❌ CSV must have 'Name' and 'Monthly USD' columns")
-    except Exception as e:
-        st.sidebar.error(f"❌ Error reading CSV: {str(e)}")
+# Facility Configuration
+st.sidebar.subheader("🏭 Facility & Infrastructure")
+lab_size = st.sidebar.number_input("Laboratory Size (sq ft)", min_value=2000, max_value=20000, step=500, key="lab_size_sqft")
+fitout_cost = st.sidebar.number_input("Lab Fit-out Cost ($/sq ft)", min_value=500, max_value=1500, step=25, key="lab_fitout_cost_per_sqft")
+monthly_rent_psf = st.sidebar.number_input("Monthly Rent ($/sq ft)", min_value=1.0, max_value=8.0, step=0.25, key="monthly_rent_per_sqft")
 
-# CSV Upload - Analyte Prices
-st.sidebar.subheader("💰 Analyte Price List CSV")
-price_file = st.sidebar.file_uploader(
-    "Upload analyte price CSV", 
-    type="csv", 
-    key="price_file",
-    help="CSV with columns: 'Analyte' and 'Price'"
-)
+# Major Equipment
+st.sidebar.subheader("🔬 Major Equipment Costs")
+icp_ms = st.sidebar.number_input("ICP-MS System ($)", min_value=50000, max_value=300000, step=10000, key="icp_ms_cost")
+gc_ms = st.sidebar.number_input("GC-MS System ($)", min_value=60000, max_value=200000, step=5000, key="gc_ms_cost")
+hplc = st.sidebar.number_input("HPLC System ($)", min_value=40000, max_value=150000, step=5000, key="hplc_cost")
+other_equipment = st.sidebar.number_input("Other Equipment ($)", min_value=50000, max_value=200000, step=5000, key="other_equipment")
 
-if price_file is not None:
-    try:
-        price_df = pd.read_csv(price_file)
-        if 'Analyte' in price_df.columns and 'Price' in price_df.columns:
-            st.session_state.analyte_prices = dict(zip(price_df['Analyte'], price_df['Price']))
-            st.sidebar.success(f"✅ Loaded {len(st.session_state.analyte_prices)} analytes")
-        else:
-            st.sidebar.error("❌ CSV must have 'Analyte' and 'Price' columns")
-    except Exception as e:
-        st.sidebar.error(f"❌ Error reading price CSV: {str(e)}")
+# Equipment Financing
+equipment_total = icp_ms + gc_ms + hplc + st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
+st.sidebar.metric("Total Equipment Cost", f"${equipment_total:,.0f}")
 
-# Company Snapshot
-st.sidebar.subheader("🏢 Company Snapshot")
-company_name = st.sidebar.text_input(
-    "LLC name", 
-    value=defaults["company_name"], 
-    key="company_name"
-)
-launch_year = st.sidebar.number_input(
-    "Launch year", 
-    min_value=2000, 
-    max_value=2100, 
-    value=defaults["launch_year"], 
-    step=1,
-    key="launch_year"
-)
+financing_rate = st.sidebar.slider("Equipment Financing Rate (%)", 3.0, 8.0, step=0.1, key="equipment_financing_rate")
+financing_years = st.sidebar.slider("Financing Term (years)", 3, 10, key="equipment_financing_years")
 
-# Payroll Assumptions
-st.sidebar.subheader("👥 Payroll Assumptions")
-num_director = st.sidebar.number_input(
-    "Lab Directors", 
-    min_value=0, 
-    max_value=5, 
-    value=defaults["num_director"], 
-    step=1,
-    key="num_director"
-)
-director_sal = st.sidebar.number_input(
-    "Director salary ($)", 
-    min_value=50000, 
-    max_value=300000, 
-    value=defaults["director_sal"], 
-    step=5000,
-    key="director_sal"
-)
+# Staffing
+st.sidebar.subheader("👥 Staffing Plan")
+director_count = st.sidebar.number_input("Laboratory Director", min_value=0, max_value=2, key="laboratory_director")
+director_sal = st.sidebar.number_input("Director Salary ($)", min_value=100000, max_value=250000, step=5000, key="director_salary")
 
-num_scientist = st.sidebar.number_input(
-    "Sr Scientists", 
-    min_value=0, 
-    max_value=20, 
-    value=defaults["num_scientist"], 
-    step=1,
-    key="num_scientist"
-)
-scientist_sal = st.sidebar.number_input(
-    "Scientist salary ($)", 
-    min_value=40000, 
-    max_value=200000, 
-    value=defaults["scientist_sal"], 
-    step=5000,
-    key="scientist_sal"
-)
+scientist_count = st.sidebar.number_input("Senior Scientists", min_value=0, max_value=10, key="senior_scientists")
+scientist_sal = st.sidebar.number_input("Scientist Salary ($)", min_value=60000, max_value=150000, step=2500, key="scientist_salary")
 
-num_tech = st.sidebar.number_input(
-    "Lab Techs", 
-    min_value=0, 
-    max_value=20, 
-    value=defaults["num_tech"], 
-    step=1,
-    key="num_tech"
-)
-tech_sal = st.sidebar.number_input(
-    "Tech salary ($)", 
-    min_value=30000, 
-    max_value=120000, 
-    value=defaults["tech_sal"], 
-    step=5000,
-    key="tech_sal"
-)
+tech_count = st.sidebar.number_input("Lab Technicians", min_value=0, max_value=15, key="lab_technicians")
+tech_sal = st.sidebar.number_input("Technician Salary ($)", min_value=35000, max_value=80000, step=2500, key="technician_salary")
 
-num_admin = st.sidebar.number_input(
-    "Admin (FTE)", 
-    min_value=0.0, 
-    max_value=5.0, 
-    value=defaults["num_admin"], 
-    step=0.5,
-    key="num_admin"
-)
-admin_sal = st.sidebar.number_input(
-    "Admin salary ($)", 
-    min_value=30000, 
-    max_value=120000, 
-    value=defaults["admin_sal"], 
-    step=5000,
-    key="admin_sal"
-)
+qa_count = st.sidebar.number_input("QA/QC Manager", min_value=0, max_value=2, key="quality_manager")
+qa_sal = st.sidebar.number_input("QA Manager Salary ($)", min_value=70000, max_value=150000, step=2500, key="qa_manager_salary")
 
-benefit_load = st.sidebar.slider(
-    "Benefits & payroll-tax (%)", 
-    min_value=0, 
-    max_value=50, 
-    value=defaults["benefit_load"], 
-    step=1,
-    key="benefit_load"
-)
+admin_count = st.sidebar.number_input("Admin Staff (FTE)", min_value=0.0, max_value=5.0, step=0.5, key="admin_staff")
+admin_sal = st.sidebar.number_input("Admin Salary ($)", min_value=35000, max_value=80000, step=2500, key="admin_salary")
 
-# Fixed Monthly Costs
-st.sidebar.subheader("🏭 Fixed Monthly Costs")
-lab_rent = st.sidebar.number_input(
-    "Lab rent ($)", 
-    min_value=0, 
-    max_value=100000, 
-    value=defaults["lab_rent"], 
-    step=1000,
-    key="lab_rent"
-)
-instr_lease = st.sidebar.number_input(
-    "Instrument leases ($)", 
-    min_value=0, 
-    max_value=50000, 
-    value=defaults["instr_lease"], 
-    step=500,
-    key="instr_lease"
-)
-utilities = st.sidebar.number_input(
-    "Utilities (Pwr+Water) ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["utilities"], 
-    step=100,
-    key="utilities"
-)
-argon_packs = st.sidebar.number_input(
-    "UHP argon packs / mo", 
-    min_value=0, 
-    max_value=10, 
-    value=defaults["argon_packs"], 
-    step=1,
-    key="argon_packs"
-)
-argon_price = st.sidebar.number_input(
-    "Price per argon pack ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["argon_price"], 
-    step=100,
-    key="argon_price"
-)
-service_contr = st.sidebar.number_input(
-    "OEM service contracts ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["service_contr"], 
-    step=500,
-    key="service_contr"
-)
-insurance = st.sidebar.number_input(
-    "Insurance (BOP+WC) ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["insurance"], 
-    step=100,
-    key="insurance"
-)
-cleaning = st.sidebar.number_input(
-    "Lab cleaning ($)", 
-    min_value=0, 
-    max_value=10000, 
-    value=defaults["cleaning"], 
-    step=100,
-    key="cleaning"
-)
-it_lims = st.sidebar.number_input(
-    "IT & LIMS SaaS ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["it_lims"], 
-    step=100,
-    key="it_lims"
-)
-regulatory = st.sidebar.number_input(
-    "Regulatory & PT fees ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["regulatory"], 
-    step=100,
-    key="regulatory"
-)
-other_fixed = st.sidebar.number_input(
-    "Other fixed G&A ($)", 
-    min_value=0, 
-    max_value=20000, 
-    value=defaults["other_fixed"], 
-    step=100,
-    key="other_fixed"
-)
+benefits_pct = st.sidebar.slider("Benefits & Payroll Tax (%)", 20, 40, key="benefits_percent")
 
-# Analyte Selection & Pricing
-st.sidebar.subheader("🧪 Analyte Selection & Pricing")
-if st.session_state.analyte_prices:
-    selected_analytes = st.sidebar.multiselect(
-        "Select analytes per sample",
-        options=list(st.session_state.analyte_prices.keys()),
-        key="selected_analytes"
-    )
-    per_sample_revenue = sum(st.session_state.analyte_prices[analyte] for analyte in selected_analytes)
-    st.sidebar.metric("Revenue / sample based on selection", f"${per_sample_revenue:.2f}")
+# Test Portfolio & Pricing
+st.sidebar.subheader("🧪 Test Portfolio & Pricing")
+monthly_samples = st.sidebar.number_input("Monthly Sample Volume", min_value=100, max_value=5000, step=50, key="monthly_samples")
+
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    st.write("**Test Mix (%)**")
+    pfas_pct = st.number_input("PFAS", min_value=0, max_value=100, key="pfas_percent")
+    metals_pct = st.number_input("Metals", min_value=0, max_value=100, key="metals_percent")
+    micro_pct = st.number_input("Microbiology", min_value=0, max_value=100, key="microbiology_percent")
+
+with col2:
+    st.write("**Pricing ($)**")
+    pfas_price = st.number_input("PFAS Price", min_value=200, max_value=800, step=25, key="pfas_test_price")
+    metals_price = st.number_input("Metals Price", min_value=50, max_value=400, step=10, key="metals_analysis_price")
+    micro_price = st.number_input("Micro Price", min_value=30, max_value=200, step=5, key="microbiology_price")
+
+# Calculations
+def calculate_monthly_payment(principal, annual_rate, years):
+    monthly_rate = annual_rate / 100 / 12
+    months = years * 12
+    if monthly_rate == 0:
+        return principal / months
+    return principal * (monthly_rate * (1 + monthly_rate)**months) / ((1 + monthly_rate)**months - 1)
+
+# Startup Costs
+initial_fitout = lab_size * fitout_cost
+equipment_down_payment = equipment_total * 0.2
+certification_costs = (st.session_state.nelap_certification_cost + 
+                      st.session_state.state_certification_costs + 
+                      st.session_state.quality_system_consultant)
+working_capital = 180000  # 3 months operating expenses
+total_startup = initial_fitout + equipment_down_payment + certification_costs + working_capital
+
+# Monthly Fixed Costs
+monthly_rent = lab_size * monthly_rent_psf
+equipment_payment = calculate_monthly_payment(equipment_total * 0.8, financing_rate, financing_years)
+
+annual_payroll = (director_count * director_sal + 
+                 scientist_count * scientist_sal + 
+                 tech_count * tech_sal + 
+                 qa_count * qa_sal + 
+                 admin_count * admin_sal)
+monthly_payroll = annual_payroll * (1 + benefits_pct/100) / 12
+
+monthly_fixed = (monthly_rent + 
+                equipment_payment +
+                monthly_payroll +
+                st.session_state.utilities_monthly +
+                st.session_state.lab_cleaning +
+                st.session_state.waste_disposal +
+                st.session_state.reagents_monthly +
+                st.session_state.gases_monthly +
+                st.session_state.labware_consumables +
+                st.session_state.maintenance_contracts +
+                st.session_state.lims_system_annual/12 +
+                st.session_state.it_infrastructure/12 +
+                (st.session_state.general_liability + st.session_state.professional_liability + 
+                 st.session_state.property_insurance + st.session_state.workers_comp)/12 +
+                st.session_state.annual_nelap_renewal/12)
+
+# Revenue and Variable Cost Calculations
+test_mix = {
+    'PFAS': pfas_pct/100,
+    'Metals': metals_pct/100,
+    'Microbiology': micro_pct/100,
+    'VOCs': st.session_state.voc_percent/100,
+    'General Chemistry': st.session_state.general_chem_percent/100,
+    'Specialty': st.session_state.specialty_percent/100
+}
+
+test_prices = {
+    'PFAS': pfas_price,
+    'Metals': metals_price,
+    'Microbiology': micro_price,
+    'VOCs': st.session_state.voc_analysis_price,
+    'General Chemistry': st.session_state.general_chemistry_price,
+    'Specialty': st.session_state.specialty_testing_price
+}
+
+test_variable_costs = {
+    'PFAS': st.session_state.pfas_variable_cost,
+    'Metals': st.session_state.metals_variable_cost,
+    'Microbiology': st.session_state.microbiology_variable_cost,
+    'VOCs': st.session_state.voc_variable_cost,
+    'General Chemistry': st.session_state.general_chem_variable_cost,
+    'Specialty': st.session_state.specialty_variable_cost
+}
+
+# Calculate weighted averages
+avg_revenue_per_sample = sum(test_mix[test] * test_prices[test] for test in test_mix)
+avg_variable_cost_per_sample = sum(test_mix[test] * test_variable_costs[test] for test in test_mix)
+
+monthly_revenue = monthly_samples * avg_revenue_per_sample
+monthly_variable_costs = monthly_samples * avg_variable_cost_per_sample
+contribution_margin = avg_revenue_per_sample - avg_variable_cost_per_sample
+
+# Break-even calculation
+if contribution_margin > 0:
+    break_even_samples = monthly_fixed / contribution_margin
 else:
-    per_sample_revenue = st.sidebar.number_input(
-        "Average revenue / sample ($)", 
-        min_value=0.0, 
-        max_value=1000.0, 
-        value=float(defaults["avg_revenue"]), 
-        step=5.0,
-        key="avg_revenue"
-    )
+    break_even_samples = float('inf')
 
-# Per-Sample Variable Cost
-monthly_samples = st.sidebar.number_input(
-    "Expected samples / month", 
-    min_value=0, 
-    max_value=10000, 
-    value=defaults["monthly_samples"], 
-    step=50,
-    key="monthly_samples"
-)
+monthly_ebitda = monthly_revenue - monthly_variable_costs - monthly_fixed
 
-# Calculate default variable cost hint
-if st.session_state.reagents_from_csv > 0:
-    default_var_cost = st.session_state.reagents_from_csv / max(monthly_samples, 1)
-else:
-    default_var_cost = defaults["variable_cost"]
+# Main Dashboard
+st.header("📊 Financial Dashboard")
 
-variable_cost = st.sidebar.number_input(
-    "Variable cost / sample ($)", 
-    min_value=0.0, 
-    max_value=500.0, 
-    value=float(default_var_cost), 
-    step=1.0,
-    key="variable_cost"
-)
-
-# Derived Calculations
-total_annual_payroll = (
-    num_director * director_sal +
-    num_scientist * scientist_sal +
-    num_tech * tech_sal +
-    num_admin * admin_sal
-)
-monthly_payroll = total_annual_payroll * (1 + benefit_load/100) / 12
-
-manual_fixed = (
-    monthly_payroll +
-    lab_rent +
-    instr_lease +
-    utilities +
-    (argon_packs * argon_price) +
-    service_contr +
-    insurance +
-    cleaning +
-    it_lims +
-    regulatory +
-    other_fixed
-)
-
-# Use CSV cost if available, otherwise manual calculation
-if st.session_state.cost_from_csv > 0:
-    monthly_fixed = st.session_state.cost_from_csv
-else:
-    monthly_fixed = manual_fixed
-
-# Contribution margin and break-even
-contrib_margin = per_sample_revenue - variable_cost
-if contrib_margin <= 0:
-    break_even = float("inf")
-else:
-    break_even = monthly_fixed / contrib_margin
-
-# Profit at current sample volume
-revenue = monthly_samples * per_sample_revenue
-variable_tot = monthly_samples * variable_cost
-monthly_profit = revenue - variable_tot - monthly_fixed
-
-# Main Page - Top KPIs
-st.header("📊 Key Performance Indicators")
-
+# Top-level metrics
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Monthly Fixed Burn", f"${monthly_fixed:,.0f}")
-
+    st.metric("Startup Investment", f"${total_startup:,.0f}")
+    
 with col2:
-    st.metric("Contribution Margin / sample", f"${contrib_margin:.2f}")
-
+    st.metric("Monthly Fixed Costs", f"${monthly_fixed:,.0f}")
+    
 with col3:
-    if break_even == float("inf"):
-        st.metric("Break-even samples / mo", "∞")
-    else:
-        st.metric("Break-even samples / mo", f"{break_even:,.0f}")
-
+    st.metric("Break-even Volume", f"{break_even_samples:,.0f} samples/mo" if break_even_samples != float('inf') else "∞")
+    
 with col4:
-    st.metric(f"Profit @ {monthly_samples:,} samples", f"${monthly_profit:,.0f}")
+    color = "normal" if monthly_ebitda >= 0 else "inverse"
+    st.metric("Monthly EBITDA", f"${monthly_ebitda:,.0f}", delta_color=color)
 
-# Legend & Notes
-with st.expander("ℹ️ Legend & Notes"):
-    st.markdown("""
-    * **Monthly Fixed Burn** – non-volume-driven costs (payroll, rent, leases, insurance, etc.).
-    * **Variable Cost / sample** – direct, sample-specific costs (e.g., consumables, gases, reagents, QC duplicates, waste disposal). This is computed by summing all consumable/reagent line items (from CSV hint or manual entry) divided by sample count.
-    * **Contribution Margin** – incremental profit per sample (revenue minus variable cost).
-    * **Break-even samples / mo** – volume at which total contribution margin equals fixed burn.
-    * **Analyte Selection** – when an analyte price list is uploaded, select analytes; "Revenue / sample" = sum of selected analyte prices.
-    * **Summary Recommendation** – Typical per-sample revenue ranges from **$100 to $250**. Lower-end clients order basic tests (IC + a few metals + microbiology); higher-end clients include PFAS or large panels, pushing revenue to $300–$500. Use the analyte selection tool to calculate your exact average.
-    """)
+# Test Portfolio Analysis
+st.subheader("🧪 Test Portfolio Analysis")
 
-# Profit vs. Throughput Chart
-st.subheader("📈 Profit vs. Throughput")
+portfolio_data = []
+for test_type in test_mix:
+    samples = monthly_samples * test_mix[test_type]
+    revenue = samples * test_prices[test_type]
+    variable_cost = samples * test_variable_costs[test_type]
+    contribution = revenue - variable_cost
+    
+    portfolio_data.append({
+        'Test Type': test_type,
+        'Volume': f"{samples:,.0f}",
+        'Revenue': f"${revenue:,.0f}",
+        'Variable Cost': f"${variable_cost:,.0f}",
+        'Contribution': f"${contribution:,.0f}",
+        'Margin %': f"{(contribution/revenue*100):,.1f}%" if revenue > 0 else "0%"
+    })
 
-max_plot = st.slider("Plot up to (samples/mo)", 0, 5000, 2500, 100)
+portfolio_df = pd.DataFrame(portfolio_data)
+st.dataframe(portfolio_df, use_container_width=True)
 
-arr = np.arange(0, max_plot + 1, 100)
-profit_curve = (per_sample_revenue - variable_cost) * arr - monthly_fixed
+# Revenue Chart
+chart_data = pd.DataFrame({
+    'Test Type': list(test_mix.keys()),
+    'Monthly Revenue': [monthly_samples * test_mix[test] * test_prices[test] for test in test_mix]
+})
 
-curve_df = pd.DataFrame({"Samples": arr, "Profit": profit_curve})
-
-line = (
-    alt.Chart(curve_df)
-    .mark_line(size=3)
-    .encode(
-        x=alt.X("Samples", title="Monthly Samples"),
-        y=alt.Y("Profit", scale=alt.Scale(zero=False), title="Monthly Profit ($)"),
-        tooltip=["Samples", alt.Tooltip("Profit", format=",.0f")]
-    )
-    .properties(height=400)
+chart = alt.Chart(chart_data).mark_bar().encode(
+    x=alt.X('Test Type:N', sort='-y'),
+    y=alt.Y('Monthly Revenue:Q', title='Monthly Revenue ($)'),
+    color=alt.Color('Test Type:N', scale=alt.Scale(scheme='category10')),
+    tooltip=['Test Type:N', alt.Tooltip('Monthly Revenue:Q', format='$,.0f')]
+).properties(
+    height=300,
+    title='Revenue by Test Type'
 )
 
-if break_even != float("inf") and break_even <= max_plot:
-    be_rule = (
-        alt.Chart(pd.DataFrame({"x": [break_even]}))
-        .mark_rule(strokeDash=[6,3], color="red", size=2)
-        .encode(x=alt.X("x", title="Monthly Samples"))
-    )
-    chart = line + be_rule
-else:
-    chart = line
-
 st.altair_chart(chart, use_container_width=True)
+
+# Profit vs Volume Analysis
+st.subheader("📈 Profit vs Volume Analysis")
+
+max_samples = st.slider("Maximum samples for analysis", 500, 3000, 2000, 100)
+sample_range = np.arange(0, max_samples + 1, 50)
+profit_data = []
+
+for samples in sample_range:
+    revenue = samples * avg_revenue_per_sample
+    variable = samples * avg_variable_cost_per_sample
+    profit = revenue - variable - monthly_fixed
+    profit_data.append({'Samples': samples, 'Monthly Profit': profit})
+
+profit_df = pd.DataFrame(profit_data)
+
+line_chart = alt.Chart(profit_df).mark_line(size=3, color='blue').encode(
+    x=alt.X('Samples:Q', title='Monthly Sample Volume'),
+    y=alt.Y('Monthly Profit:Q', title='Monthly Profit ($)', scale=alt.Scale(zero=False)),
+    tooltip=[alt.Tooltip('Samples:Q'), alt.Tooltip('Monthly Profit:Q', format='$,.0f')]
+)
+
+break_even_line = alt.Chart(pd.DataFrame({'x': [break_even_samples]})).mark_rule(
+    strokeDash=[5,5], 
+    color='red', 
+    size=2
+).encode(x='x:Q') if break_even_samples != float('inf') and break_even_samples <= max_samples else alt.Chart()
+
+zero_line = alt.Chart(pd.DataFrame({'y': [0]})).mark_rule(color='gray').encode(y='y:Q')
+
+combined_chart = line_chart + break_even_line + zero_line
+st.altair_chart(combined_chart, use_container_width=True)
 st.caption("🟥 Red dashed line = break-even volume")
 
-# Five-Year Projection
-with st.expander("📊 Five-Year Projection"):
+# Five-Year Projections
+with st.expander("📊 Five-Year Financial Projections"):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        growth = st.slider("Annual sample growth (%)", 0, 100, 20)
+        sample_growth = st.slider("Annual Sample Growth (%)", 0, 50, 15)
     with col2:
-        price_inc = st.slider("Annual price increase (%)", 0, 20, 3)
+        price_growth = st.slider("Annual Price Increase (%)", 0, 15, 4)
     with col3:
-        inflate = st.slider("Fixed-cost inflation (%)", 0, 20, 4)
+        cost_inflation = st.slider("Cost Inflation (%)", 0, 15, 5)
     
     years = np.arange(0, 5)
-    vols = monthly_samples * (1 + growth/100) ** years
-    revs = vols * per_sample_revenue * (1 + price_inc/100) ** years
-    vars = vols * variable_cost * (1 + inflate/100) ** years
-    fixed = monthly_fixed * (1 + inflate/100) ** years
-    ebitda = revs - vars - fixed
+    projection_data = []
     
-    proj_df = pd.DataFrame({
-        "Year": launch_year + years,
-        "Samples / yr": (vols * 12).astype(int),
-        "Revenue": revs * 12,
-        "Variable Cost": vars * 12,
-        "Fixed Cost": fixed * 12,
-        "EBITDA": ebitda * 12,
-    })
+    for year in years:
+        year_samples = monthly_samples * (1 + sample_growth/100) ** year * 12
+        year_revenue = year_samples * avg_revenue_per_sample * (1 + price_growth/100) ** year
+        year_variable = year_samples * avg_variable_cost_per_sample * (1 + cost_inflation/100) ** year
+        year_fixed = monthly_fixed * 12 * (1 + cost_inflation/100) ** year
+        year_ebitda = year_revenue - year_variable - year_fixed
+        
+        projection_data.append({
+            'Year': launch_year + year,
+            'Samples': f"{year_samples:,.0f}",
+            'Revenue': f"${year_revenue:,.0f}",
+            'Variable Costs': f"${year_variable:,.0f}",
+            'Fixed Costs': f"${year_fixed:,.0f}",
+            'EBITDA': f"${year_ebitda:,.0f}",
+            'EBITDA Margin': f"{(year_ebitda/year_revenue*100):,.1f}%" if year_revenue > 0 else "0%"
+        })
     
-    st.dataframe(
-        proj_df.style.format({
-            "Samples / yr": "{:,}",
-            "Revenue": "${:,.0f}",
-            "Variable Cost": "${:,.0f}",
-            "Fixed Cost": "${:,.0f}",
-            "EBITDA": "${:,.0f}",
-        }),
-        use_container_width=True
-    )
+    proj_df = pd.DataFrame(projection_data)
+    st.dataframe(proj_df, use_container_width=True)
+
+# Cost Breakdown
+st.subheader("💰 Monthly Cost Breakdown")
+
+cost_categories = {
+    'Payroll & Benefits': monthly_payroll,
+    'Facility Rent': monthly_rent,
+    'Equipment Financing': equipment_payment,
+    'Utilities & Cleaning': st.session_state.utilities_monthly + st.session_state.lab_cleaning,
+    'Consumables & Reagents': st.session_state.reagents_monthly + st.session_state.labware_consumables,
+    'Maintenance & Service': st.session_state.maintenance_contracts,
+    'IT & Software': (st.session_state.lims_system_annual + st.session_state.it_infrastructure)/12,
+    'Insurance & Legal': (st.session_state.general_liability + st.session_state.professional_liability + 
+                         st.session_state.property_insurance + st.session_state.workers_comp)/12,
+    'Certification & QA': st.session_state.annual_nelap_renewal/12,
+    'Other Operations': st.session_state.waste_disposal + st.session_state.gases_monthly
+}
+
+cost_df = pd.DataFrame(list(cost_categories.items()), columns=['Category', 'Monthly Cost'])
+cost_df['Percentage'] = (cost_df['Monthly Cost'] / cost_df['Monthly Cost'].sum() * 100).round(1)
+
+pie_chart = alt.Chart(cost_df).mark_arc().encode(
+    theta='Monthly Cost:Q',
+    color=alt.Color('Category:N', scale=alt.Scale(scheme='category20')),
+    tooltip=['Category:N', alt.Tooltip('Monthly Cost:Q', format='$,.0f'), 'Percentage:Q']
+).properties(
+    height=400,
+    title='Monthly Fixed Cost Breakdown'
+)
+
+st.altair_chart(pie_chart, use_container_width=True)
+
+# Key Insights and Recommendations
+st.subheader("💡 Key Insights & Recommendations")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("**💰 Financial Health**")
+    if monthly_ebitda > 0:
+        st.success(f"✅ Profitable at current volume ({monthly_samples:,} samples/mo)")
+    else:
+        st.warning(f"⚠️ Need {break_even_samples:,.0f} samples/mo to break even")
     
-    bar = (
-        alt.Chart(proj_df)
-        .mark_bar(size=40)
-        .encode(
-            x=alt.X("Year:O", title="Fiscal Year"),
-            y=alt.Y("EBITDA", title="Annual EBITDA ($)"),
-            color=alt.condition(
-                alt.datum.EBITDA > 0,
-                alt.value("#4caf50"),  # green for positive
-                alt.value("#e53935")   # red for negative
-            ),
-            tooltip=["Year", alt.Tooltip("EBITDA", format="$,.0f")]
-        )
-        .properties(height=300)
-    )
+    margin_pct = (monthly_ebitda / monthly_revenue * 100) if monthly_revenue > 0 else 0
+    if margin_pct > 15:
+        st.success(f"✅ Strong EBITDA margin: {margin_pct:.1f}%")
+    elif margin_pct > 5:
+        st.info(f"📊 Moderate EBITDA margin: {margin_pct:.1f}%")
+    else:
+        st.error(f"❌ Low/negative EBITDA margin: {margin_pct:.1f}%")
+
+with col2:
+    st.markdown("**🎯 Optimization Opportunities**")
     
-    st.altair_chart(bar, use_container_width=True)
-    st.caption("Green = positive EBITDA; Red = negative.")
+    # Find highest margin test
+    test_margins = {test: (test_prices[test] - test_variable_costs[test])/test_prices[test] 
+                   for test in test_prices}
+    best_test = max(test_margins, key=test_margins.get)
+    
+    st.info(f"🔬 Focus on {best_test} testing (highest margin: {test_margins[best_test]*100:.1f}%)")
+    
+    if monthly_payroll / monthly_fixed > 0.6:
+        st.warning("👥 Payroll >60% of fixed costs - consider efficiency gains")
+    
+    if avg_revenue_per_sample < 200:
+        st.info("💰 Consider premium testing services to increase revenue/sample")
 
 # Footer
 st.markdown("---")
-st.markdown(
-    "*This interactive model is for planning purposes only. "
-    "Validate all inputs against actual quotes, contracts, and market data "
-    "before making financial decisions.*"
-)
+st.markdown("""
+*This model is based on 2025 industry research and should be used for planning purposes only. 
+Validate all assumptions with current market data, equipment vendors, and regulatory requirements 
+before making business decisions.*
+
+**Key Sources**: Environmental testing market data, 
+salary surveys, and lab construction costs.
+""")
