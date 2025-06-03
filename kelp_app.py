@@ -1,4 +1,21 @@
+"""kelp_lab_finance_app.py
+---------------------------------------------------------------------
+Streamlit Cloud application to model the operating economics of an
+analytical water laboratory (e.g., KELP Laboratory LLC), incorporating
+per-analyte pricing for customizable revenue calculations.
 
+Features
+  • Manual input **or** CSV upload for cost assumptions
+  • Upload analyte price list CSV and select analytes per sample
+  • Dynamic break-even & profit-vs-throughput explorer
+  • Five-year scenario projection (volume growth, price escalation,
+    cost inflation)
+  • Responsive Altair visualisations
+
+Requirements: streamlit, pandas, numpy, altair
+Deploy on Streamlit Cloud (Python ≥3.9)
+---------------------------------------------------------------------
+"""
 ###############################################################################
 # Imports & Page Config
 ###############################################################################
@@ -9,8 +26,8 @@ import altair as alt
 from datetime import datetime
 
 st.set_page_config(
-    page_title="KELP Fin Model",
-    page_icon="",
+    page_title="KELP Lab Financial Model",
+    page_icon="🧪",
     layout="wide",
 )
 
@@ -19,11 +36,11 @@ st.set_page_config(
 ###############################################################################
 st.sidebar.title("🔧 Model Assumptions")
 
-# ── 1. Operating-budget CSV upload (optional) ────────────────────────────────
+# ── 1. Operating-budget CSV upload (optional) ─────────────────────────────────
 csv_file = None
 cost_from_csv = 0.0
 reagents_from_csv = 0.0
-with st.sidebar.expander("📄 Upload Operating-Budget CSV (optional)"):
+with st.sidebar.expander("Upload Operating-Budget CSV (optional)"):
     csv_file = st.file_uploader("Drag & drop CSV (Name, Monthly USD)", type="csv")
     if csv_file is not None:
         df_csv = pd.read_csv(csv_file)
@@ -35,10 +52,10 @@ with st.sidebar.expander("📄 Upload Operating-Budget CSV (optional)"):
             reagents_from_csv = df_csv.loc[mask, "Monthly USD"].sum()
             st.success(f"Loaded {len(df_csv)} rows • Total cost = ${cost_from_csv:,.0f}/mo")
 
-# ── 2. Analyte price list CSV upload ─────────────────────────────────────────
+# ── 2. Analyte price list CSV upload ──────────────────────────────────────────
 price_df = None
 analyte_prices = {}
-with st.sidebar.expander("💲 Upload Analyte Price List CSV (analyte, price)"):
+with st.sidebar.expander("Upload Analyte Price List CSV"):
     price_file = st.file_uploader("Drag & drop price list CSV", type="csv")
     if price_file is not None:
         price_df = pd.read_csv(price_file)
@@ -59,7 +76,7 @@ num_director  = st.sidebar.number_input("Lab Directors",     0, 5, 1)
 director_sal  = st.sidebar.number_input("Director salary ($)", 50_000, 300_000, 125_000, 5_000)
 num_scientist = st.sidebar.number_input("Sr Scientists",       0, 20, 4)
 scientist_sal = st.sidebar.number_input("Scientist salary ($)", 40_000, 200_000, 93_000, 5_000)
-num_tech      = st.sidebar.number_input("Lab Techs",         0, 20, 2)
+num_tech      = st.sidebar.number_input("Lab Techs",           0, 20, 2)
 tech_sal      = st.sidebar.number_input("Tech salary ($)",     30_000, 120_000, 51_000, 5_000)
 num_admin     = st.sidebar.number_input("Admin (FTE)",         0.0, 5.0, 0.5, 0.5)
 admin_sal     = st.sidebar.number_input("Admin salary ($)",    30_000, 120_000, 49_000, 5_000)
@@ -138,14 +155,14 @@ col2.metric("Contribution Margin / sample", f"${time_margin:,.2f}")
 col3.metric("Break-even samples / mo",      f"{break_even:,.0f}")
 col4.metric(f"Profit @ {monthly_samples} samples", f"${monthly_profit:,.0f}")
 
-with st.expander("ℹ️ Legend & CSV Behavior"):
+with st.expander("ℹ️ Legend & Notes"):
     st.markdown("""
 * **Monthly Fixed Burn** – costs independent of volume (payroll, rent, leases, etc.).
-* **Variable Cost / sample** – consumables, gases, reagents, QC extras, disposal fees that scale per sample.
+* **Variable Cost / sample** – direct costs per sample (e.g., consumables, gases, reagents, QC duplicates, hazardous waste disposal). This is calculated by estimating the total cost of these items for a typical mix of analyses and dividing by the number of samples.
 * **Contribution Margin** – incremental margin per sample (revenue minus variable cost).
-* **Break-even samples / mo** – volume where total contribution margin covers fixed burn.
+* **Break-even samples / mo** – sample volume where total contribution margin covers fixed burn.
 * **Analyte selection** – when a price list CSV is uploaded, select analytes; revenue/sample = sum of selected analyte prices.
-* **CSV override** – uploading an operating-budget CSV sets fixed burn = sum of its 'Monthly USD'; reagent rows inform a variable-cost hint.
+* **Summary Recommendation** – Typical per-sample revenue based on customer requests ranges from $100 to $250. Lower-end clients order basic tests (IC + a few metals + microbiology), higher-end clients include PFAS and large panels, pushing revenue to $300–$500. Use the analyzer selection tool above to calculate your precise average.
 """)
 
 st.markdown("---")
@@ -160,64 +177,4 @@ profit_curve = (per_sample_revenue - variable_cost) * arr - monthly_fixed
 curve_df = pd.DataFrame({"Samples": arr, "Profit": profit_curve})
 
 chart = (
-    alt.Chart(curve_df).mark_line(size=3).encode(
-        x="Samples",
-        y=alt.Y("Profit", scale=alt.Scale(zero=False)),
-        tooltip=["Samples", alt.Tooltip("Profit", format=",")]
-    ).properties(height=400)
-    + alt.Chart(pd.DataFrame({"x": [break_even]})).mark_rule(strokeDash=[6,3], color="red").encode(x="x")
-)
-
-st.altair_chart(chart, use_container_width=True)
-st.caption("🟥 Red dashed line = break-even volume")
-
-###############################################################################
-# Five-Year Projection
-###############################################################################
-with st.expander("📊 Five-Year Projection"):
-    g_col, p_col, i_col = st.columns(3)
-    growth    = g_col.slider("Annual sample growth (%)", 0, 100, 20)
-    price_inc = p_col.slider("Annual price increase (%)", 0, 20, 3)
-    inflate   = i_col.slider("Fixed-cost inflation (%)", 0, 20, 4)
-
-    years = np.arange(0, 5)
-    vols  = monthly_samples * (1 + growth/100) ** years
-    revs  = vols * per_sample_revenue * (1 + price_inc/100) ** years
-    vars  = vols * variable_cost * (1 + inflate/100) ** years
-    fixed = monthly_fixed * (1 + inflate/100) ** years
-    ebitda = revs - vars - fixed
-
-    proj_df = pd.DataFrame({
-        "Year": launch_year + years,
-        "Samples / yr": vols * 12,
-        "Revenue": revs,
-        "Variable Cost": vars,
-        "Fixed Cost": fixed * 12,
-        "EBITDA": ebitda * 12,
-    })
-
-    st.dataframe(proj_df.style.format({
-        "Samples / yr": "{:,.0f}",
-        "Revenue": "${:,.0f}",
-        "Variable Cost": "${:,.0f}",
-        "Fixed Cost": "${:,.0f}",
-        "EBITDA": "${:,.0f}"
-    }), use_container_width=True)
-
-    bar = (
-        alt.Chart(proj_df).mark_bar(size=40).encode(
-            x=alt.X("Year:O", title="Fiscal Year"),
-            y=alt.Y("EBITDA", title="Annual EBITDA"),
-            color=alt.condition(alt.datum.EBITDA > 0, alt.value("#4caf50"), alt.value("#e53935"))
-        ).properties(height=300)
-    )
-    st.altair_chart(bar, use_container_width=True)
-    st.caption("Green = positive EBITDA; Red = negative.")
-
-###############################################################################
-# Footer
-###############################################################################
-st.markdown("---")
-st.markdown(
-    "*This interactive model is for planning purposes only. Validate all inputs against actual quotes, contracts, and market data before making financial decisions.*"
-)
+    alt.Chart(curve_df).
