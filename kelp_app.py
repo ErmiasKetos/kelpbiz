@@ -216,6 +216,17 @@ with col2:
     st.info("• IC System: $1,400/mo") 
     st.info("• LC-MS/MS: $9,300/mo")
 
+# Calculations
+def calculate_monthly_payment(principal, annual_rate, years):
+    """Calculate monthly payment for a loan given principal, annual rate, and term in years"""
+    if principal <= 0:
+        return 0
+    monthly_rate = annual_rate / 100 / 12
+    months = years * 12
+    if monthly_rate == 0:
+        return principal / months
+    return principal * (monthly_rate * (1 + monthly_rate)**months) / ((1 + monthly_rate)**months - 1)
+
 # Calculate total equipment costs and payments
 leased_equipment = 0
 purchased_equipment = 0
