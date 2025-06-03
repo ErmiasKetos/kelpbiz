@@ -176,9 +176,8 @@ location = st.sidebar.selectbox("Primary Location",
     key="location")
 
 # Facility Configuration
-st.sidebar.subheader("🏭 Facility & Infrastructure")
+st.sidebar.subheader("🏭 Facility (Monthly Rental)")
 lab_size = st.sidebar.number_input("Laboratory Size (sq ft)", min_value=2000, max_value=20000, step=500, key="lab_size_sqft")
-fitout_cost = st.sidebar.number_input("Lab Fit-out Cost ($/sq ft)", min_value=500, max_value=1500, step=25, key="lab_fitout_cost_per_sqft")
 monthly_rent_psf = st.sidebar.number_input("Monthly Rent ($/sq ft)", min_value=1.0, max_value=8.0, step=0.25, key="monthly_rent_per_sqft")
 
 # Major Equipment with Lease Options (Based on actual Thermo Fisher quotes)
@@ -250,15 +249,18 @@ if lease_hplc:
 else:
     purchased_equipment += hplc_ms
 
+# Always purchased equipment
 purchased_equipment += gc_ms + st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
 
 equipment_total = leased_equipment + purchased_equipment
 monthly_equipment_financing = calculate_monthly_payment(purchased_equipment * 0.8, financing_rate, financing_years)
 
-st.sidebar.metric("Total Equipment Cost", f"${equipment_total:,.0f}")
-st.sidebar.metric("Leased Equipment", f"${leased_equipment:,.0f}")
-st.sidebar.metric("Purchased Equipment", f"${purchased_equipment:,.0f}")
-st.sidebar.metric("Monthly Lease Payments", f"${monthly_lease_total:,.0f}")
+st.sidebar.metric("Total Equipment Value", f"${equipment_total:,.0f}")
+if leased_equipment > 0:
+    st.sidebar.metric("Leased Equipment Value", f"${leased_equipment:,.0f}")
+if purchased_equipment > 0:
+    st.sidebar.metric("Purchased Equipment", f"${purchased_equipment:,.0f}")
+st.sidebar.metric("Monthly Equipment Payments", f"${monthly_lease_total + monthly_equipment_financing:,.0f}")
 
 # Staffing
 st.sidebar.subheader("👥 Staffing Plan")
@@ -304,14 +306,13 @@ def calculate_monthly_payment(principal, annual_rate, years):
         return principal / months
     return principal * (monthly_rate * (1 + monthly_rate)**months) / ((1 + monthly_rate)**months - 1)
 
-# Startup Costs
-initial_fitout = lab_size * fitout_cost
+# Startup Costs (no facility buildout since renting)
 equipment_down_payment = purchased_equipment * 0.2  # Only for purchased equipment
 certification_costs = (st.session_state.nelap_certification_cost + 
                       st.session_state.state_certification_costs + 
                       st.session_state.quality_system_consultant)
 working_capital = 180000  # 3 months operating expenses
-total_startup = initial_fitout + equipment_down_payment + certification_costs + working_capital
+total_startup = equipment_down_payment + certification_costs + working_capital
 
 # Monthly Fixed Costs
 monthly_rent = lab_size * monthly_rent_psf
