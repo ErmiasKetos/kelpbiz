@@ -1,75 +1,7 @@
-"""kelp_lab_finance_app.py
----------------------------------------------------------------------
-Streamlit Cloud application to model the operating economics of an
-analytical water laboratory (e.g., KELP Laboratory LLC), incorporating
-per-analyte pricing for customizable revenue calculations.
-
-Features
-  • Manual input **or** CSV upload for cost assumptions
-  • Upload analyte price list CSV and select analytes per sample
-  • Dynamic break-even & profit-vs-throughput explorer
-  • Five-year scenario projection (volume growth, price escalation,
-    cost inflation)
-  • Responsive Altair visualisations
-  • “Reset to defaults” button to revert inputs
-
-Requirements: streamlit, pandas, numpy, altair
-Deploy on Streamlit Cloud (Python ≥3.9)
----------------------------------------------------------------------
-"""
-###############################################################################
-# Imports & Page Config
-###############################################################################
-import streamlit as st
-import pandas as pd
-import numpy as np
-import altair as alt
-from datetime import datetime
-
-st.set_page_config(
-    page_title="KELP Lab Financial Model",
-    page_icon="🧪",
-    layout="wide",
-)
-
-###############################################################################
-# Default values dictionary for resetting
-###############################################################################
-defaults = {
-    "num_director": 1,
-    "director_sal": 125000,
-    "num_scientist": 4,
-    "scientist_sal": 93000,
-    "num_tech": 2,
-    "tech_sal": 51000,
-    "num_admin": 0.5,
-    "admin_sal": 49000,
-    "benefit_load": 0.25,
-    "lab_rent": 21945,
-    "instr_lease": 14000,
-    "utilities": 2000,
-    "argon_packs": 1,
-    "argon_price": 5324,
-    "service_contr": 5000,
-    "insurance": 2500,
-    "cleaning": 1500,
-    "it_lims": 4000,
-    "regulatory": 1960,
-    "other_fixed": 500,
-    "per_sample_revenue": 120,
-    "variable_cost": 22,
-    "monthly_samples": 1400,
-}
-
-###############################################################################
-# Reset logic
-###############################################################################
+# Reset logic: only initialize non-widget keys
 if "reset" not in st.session_state:
     for key, val in defaults.items():
         st.session_state[key] = val
-    st.session_state["csv_file"] = None
-    st.session_state["price_file"] = None
-    st.session_state["selected"] = []
     st.session_state["cost_from_csv"] = 0.0
     st.session_state["reagents_from_csv"] = 0.0
     st.session_state["analyte_prices"] = {}
@@ -80,9 +12,6 @@ if "reset" not in st.session_state:
 if st.sidebar.button("🔄 Reset to defaults"):
     for key, val in defaults.items():
         st.session_state[key] = val
-    st.session_state["csv_file"] = None
-    st.session_state["price_file"] = None
-    st.session_state["selected"] = []
     st.session_state["cost_from_csv"] = 0.0
     st.session_state["reagents_from_csv"] = 0.0
     st.session_state["analyte_prices"] = {}
@@ -90,7 +19,6 @@ if st.sidebar.button("🔄 Reset to defaults"):
     st.session_state["company_name"] = "KELP Laboratory LLC"
     st.session_state["reset"] = True
 
-###############################################################################
 # Sidebar – Data Uploads & Assumptions
 ###############################################################################
 st.sidebar.title("🔧 Model Assumptions")
