@@ -1,19 +1,10 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import altair as alt
-from datetime import datetime
-
-st.set_page_config(page_title="KELP Lab Financial Model", page_icon="🧪", layout="wide")
-
-# -----------------------------------------------------------------------------
-# Sidebar – Key Assumptions (user‑editable parameters)
+# Sidebar – Key Assumptions & CSV Upload (user‑editable parameters)
 # -----------------------------------------------------------------------------
 st.sidebar.header("🔧 Model Assumptions")
 
 # ◼ Company snapshot
 st.sidebar.subheader("Lab identity")
-company_name = st.sidebar.text_input("LLC name", "KELP Laboratory LLC")
+company_name = st.sidebar.text_input("LLC name", "KELP LLC")
 launch_year = st.sidebar.number_input("Launch year", value=datetime.now().year, step=1)
 
 # ◼ Personnel
