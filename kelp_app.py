@@ -41,7 +41,6 @@ defaults = {
     "icp_ms_cost": 175400,  # iCAP MSX-300 ICP-MS final price from quote
     "ic_system_cost": 48300,  # Dionex Inuvion IC System final price
     "hplc_ms_cost": 303500,  # TSQ Altis Plus LC-MS/MS final price 
-    "gc_ms_cost": 120000,  # Estimated GC-MS
     "microscopy_cost": 45000,
     "sample_prep_equipment": 60000,
     "lab_furniture": 40000,
@@ -202,7 +201,6 @@ with col1:
     if lease_hplc:
         hplc_lease_payment = st.number_input("HPLC-MS Lease ($/mo)", min_value=3000, max_value=15000, step=500, key="hplc_ms_lease_payment")
     
-    gc_ms = st.number_input("GC-MS System ($)", min_value=60000, max_value=200000, step=5000, key="gc_ms_cost")
     other_equipment = st.number_input("Other Equipment ($)", min_value=50000, max_value=200000, step=5000, key="other_equipment")
 
 with col2:
@@ -250,7 +248,7 @@ else:
     purchased_equipment += hplc_ms
 
 # Always purchased equipment
-purchased_equipment += gc_ms + st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
+purchased_equipment += st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
 
 equipment_total = leased_equipment + purchased_equipment
 monthly_equipment_financing = calculate_monthly_payment(purchased_equipment * 0.8, financing_rate, financing_years)
@@ -317,6 +315,8 @@ total_startup = equipment_down_payment + certification_costs + working_capital
 # Monthly Fixed Costs
 monthly_rent = lab_size * monthly_rent_psf
 monthly_equipment_payments = monthly_lease_total + monthly_equipment_financing
+monthly_fixed_costs = (monthly_rent + monthly_equipment_payments + total_monthly_salaries + 
+                      additional_monthly_costs)
 
 annual_payroll = (director_count * director_sal + 
                  scientist_count * scientist_sal + 
