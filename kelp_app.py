@@ -27,7 +27,7 @@ defaults = {
     # Company Info
     "company_name": "KELP Environmental Laboratory LLC",
     "launch_year": datetime.now().year,
-    "location": "California",
+    "location": "California Bay Area",
     
     # Facility & Infrastructure (Based on lab fit-out costs $771-$986 psf)
     "lab_size_sqft": 5000,
@@ -37,33 +37,41 @@ defaults = {
     "lab_cleaning": 2500,
     "waste_disposal": 4000,
     
-    # Major Equipment (Based on ICP-MS $50k-$250k, other equipment)
-    "icp_ms_cost": 180000,
-    "gc_ms_cost": 120000,
-    "hplc_cost": 80000,
+    # Major Equipment (Based on actual Thermo Fisher quotes)
+    "icp_ms_cost": 175400,  # iCAP MSX-300 ICP-MS final price from quote
+    "ic_system_cost": 48300,  # Dionex Inuvion IC System final price
+    "hplc_ms_cost": 303500,  # TSQ Altis Plus LC-MS/MS final price 
+    "gc_ms_cost": 120000,  # Estimated GC-MS
     "microscopy_cost": 45000,
     "sample_prep_equipment": 60000,
     "lab_furniture": 40000,
-    "other_equipment": 85000,
+    "other_equipment": 75000,
     
-    # Equipment Financing & Maintenance
+    # Equipment Financing & Leasing (Based on actual quotes)
+    "lease_icp_ms": True,
+    "lease_ic_system": True,  
+    "lease_hplc_ms": True,
     "equipment_financing_rate": 5.5,
     "equipment_financing_years": 7,
+    # Actual lease payments: ICP-MS $3,300/mo, IC $1,400/mo, LC-MS/MS $9,300/mo
+    "icp_ms_lease_payment": 3300,
+    "ic_system_lease_payment": 1400,
+    "hplc_ms_lease_payment": 9300,
     "annual_maintenance_percent": 12,
     "equipment_replacement_reserve": 8,
     
-    # Staffing (Research-based salaries)
+    # Staffing (California Bay Area salaries - updated based on research)
     "laboratory_director": 1,
-    "director_salary": 150000,
+    "director_salary": 185000,  # Bay Area: $148k-$220k range, using upper end
     "senior_scientists": 2,
-    "scientist_salary": 85000,
+    "scientist_salary": 140000,  # Bay Area: $130k-$157k range for environmental scientists
     "lab_technicians": 4,
-    "technician_salary": 55000,
+    "technician_salary": 65000,  # Higher for Bay Area
     "quality_manager": 1,
-    "qa_manager_salary": 95000,
+    "qa_manager_salary": 125000,  # Adjusted for Bay Area
     "admin_staff": 1.5,
-    "admin_salary": 48000,
-    "benefits_percent": 28,
+    "admin_salary": 58000,  # Bay Area adjustment
+    "benefits_percent": 32,  # Higher for California
     
     # Certification & Compliance
     "nelap_certification_cost": 15000,
@@ -141,7 +149,13 @@ with st.expander("ℹ️ About This Model"):
     
     **💰 Break-even Analysis**: Understanding the volume needed to achieve profitability
     
-    *Data based on 2025 industry research including equipment costs, salary surveys, and market pricing.*
+    **🎯 Real Equipment Data**: Based on actual Thermo Fisher quotes:
+    - ICP-MS System: $175,400 (lease: $3,300/mo)
+    - IC System: $48,300 (lease: $1,400/mo) 
+    - LC-MS/MS System: $303,500 (lease: $9,300/mo)
+    - Total leased equipment: $14,000/month
+    
+    *Data based on 2025 industry research, actual equipment quotes, and Bay Area salary surveys.*
     """)
 
 # Sidebar Configuration
@@ -158,7 +172,7 @@ st.sidebar.subheader("🏢 Company Information")
 company_name = st.sidebar.text_input("Laboratory Name", key="company_name")
 launch_year = st.sidebar.number_input("Launch Year", min_value=2020, max_value=2030, key="launch_year")
 location = st.sidebar.selectbox("Primary Location", 
-    ["California", "Texas", "Florida", "New York", "Illinois", "Pennsylvania", "Other"], 
+    ["California Bay Area", "California Other", "Texas", "Florida", "New York", "Illinois", "Pennsylvania", "Other"], 
     key="location")
 
 # Facility Configuration
@@ -167,38 +181,92 @@ lab_size = st.sidebar.number_input("Laboratory Size (sq ft)", min_value=2000, ma
 fitout_cost = st.sidebar.number_input("Lab Fit-out Cost ($/sq ft)", min_value=500, max_value=1500, step=25, key="lab_fitout_cost_per_sqft")
 monthly_rent_psf = st.sidebar.number_input("Monthly Rent ($/sq ft)", min_value=1.0, max_value=8.0, step=0.25, key="monthly_rent_per_sqft")
 
-# Major Equipment
-st.sidebar.subheader("🔬 Major Equipment Costs")
-icp_ms = st.sidebar.number_input("ICP-MS System ($)", min_value=50000, max_value=300000, step=10000, key="icp_ms_cost")
-gc_ms = st.sidebar.number_input("GC-MS System ($)", min_value=60000, max_value=200000, step=5000, key="gc_ms_cost")
-hplc = st.sidebar.number_input("HPLC System ($)", min_value=40000, max_value=150000, step=5000, key="hplc_cost")
-other_equipment = st.sidebar.number_input("Other Equipment ($)", min_value=50000, max_value=200000, step=5000, key="other_equipment")
+# Major Equipment with Lease Options (Based on actual Thermo Fisher quotes)
+st.sidebar.subheader("🔬 Major Equipment & Financing")
+st.sidebar.write("*Equipment costs and lease payments from actual Thermo Fisher quotes*")
 
-# Equipment Financing
-equipment_total = icp_ms + gc_ms + hplc + st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    st.write("**Equipment Costs**")
+    icp_ms = st.number_input("ICP-MS System ($)", min_value=50000, max_value=300000, step=10000, key="icp_ms_cost")
+    lease_icp = st.checkbox("Lease ICP-MS", key="lease_icp_ms")
+    if lease_icp:
+        icp_lease_payment = st.number_input("ICP-MS Lease ($/mo)", min_value=1000, max_value=8000, step=100, key="icp_ms_lease_payment")
+    
+    ic_system = st.number_input("Ion Chromatography ($)", min_value=30000, max_value=120000, step=5000, key="ic_system_cost")
+    lease_ic = st.checkbox("Lease IC System", key="lease_ic_system")
+    if lease_ic:
+        ic_lease_payment = st.number_input("IC System Lease ($/mo)", min_value=500, max_value=3000, step=100, key="ic_system_lease_payment")
+    
+    hplc_ms = st.number_input("HPLC-MS System ($)", min_value=80000, max_value=500000, step=10000, key="hplc_ms_cost")
+    lease_hplc = st.checkbox("Lease HPLC-MS", key="lease_hplc_ms")
+    if lease_hplc:
+        hplc_lease_payment = st.number_input("HPLC-MS Lease ($/mo)", min_value=3000, max_value=15000, step=500, key="hplc_ms_lease_payment")
+    
+    gc_ms = st.number_input("GC-MS System ($)", min_value=60000, max_value=200000, step=5000, key="gc_ms_cost")
+    other_equipment = st.number_input("Other Equipment ($)", min_value=50000, max_value=200000, step=5000, key="other_equipment")
+
+with col2:
+    st.write("**Financing Terms**")
+    financing_rate = st.slider("Purchase Financing Rate (%)", 3.0, 8.0, step=0.1, key="equipment_financing_rate")
+    financing_years = st.slider("Financing Term (years)", 3, 10, key="equipment_financing_years")
+    
+    st.write("**Actual Lease Examples:**")
+    st.info("• ICP-MS: $3,300/mo")
+    st.info("• IC System: $1,400/mo") 
+    st.info("• LC-MS/MS: $9,300/mo")
+
+# Calculate total equipment costs and payments
+leased_equipment = 0
+purchased_equipment = 0
+monthly_lease_total = 0
+
+if lease_icp:
+    leased_equipment += icp_ms
+    monthly_lease_total += st.session_state.get('icp_ms_lease_payment', 3300)
+else:
+    purchased_equipment += icp_ms
+
+if lease_ic:
+    leased_equipment += ic_system
+    monthly_lease_total += st.session_state.get('ic_system_lease_payment', 1400)
+else:
+    purchased_equipment += ic_system
+    
+if lease_hplc:
+    leased_equipment += hplc_ms
+    monthly_lease_total += st.session_state.get('hplc_ms_lease_payment', 9300)
+else:
+    purchased_equipment += hplc_ms
+
+purchased_equipment += gc_ms + st.session_state.microscopy_cost + st.session_state.sample_prep_equipment + st.session_state.lab_furniture + other_equipment
+
+equipment_total = leased_equipment + purchased_equipment
+monthly_equipment_financing = calculate_monthly_payment(purchased_equipment * 0.8, financing_rate, financing_years)
+
 st.sidebar.metric("Total Equipment Cost", f"${equipment_total:,.0f}")
-
-financing_rate = st.sidebar.slider("Equipment Financing Rate (%)", 3.0, 8.0, step=0.1, key="equipment_financing_rate")
-financing_years = st.sidebar.slider("Financing Term (years)", 3, 10, key="equipment_financing_years")
+st.sidebar.metric("Leased Equipment", f"${leased_equipment:,.0f}")
+st.sidebar.metric("Purchased Equipment", f"${purchased_equipment:,.0f}")
+st.sidebar.metric("Monthly Lease Payments", f"${monthly_lease_total:,.0f}")
 
 # Staffing
 st.sidebar.subheader("👥 Staffing Plan")
 director_count = st.sidebar.number_input("Laboratory Director", min_value=0, max_value=2, key="laboratory_director")
-director_sal = st.sidebar.number_input("Director Salary ($)", min_value=100000, max_value=250000, step=5000, key="director_salary")
+director_sal = st.sidebar.number_input("Director Salary ($)", min_value=150000, max_value=300000, step=5000, key="director_salary")
 
 scientist_count = st.sidebar.number_input("Senior Scientists", min_value=0, max_value=10, key="senior_scientists")
-scientist_sal = st.sidebar.number_input("Scientist Salary ($)", min_value=60000, max_value=150000, step=2500, key="scientist_salary")
+scientist_sal = st.sidebar.number_input("Scientist Salary ($)", min_value=110000, max_value=200000, step=2500, key="scientist_salary")
 
 tech_count = st.sidebar.number_input("Lab Technicians", min_value=0, max_value=15, key="lab_technicians")
-tech_sal = st.sidebar.number_input("Technician Salary ($)", min_value=35000, max_value=80000, step=2500, key="technician_salary")
+tech_sal = st.sidebar.number_input("Technician Salary ($)", min_value=50000, max_value=100000, step=2500, key="technician_salary")
 
 qa_count = st.sidebar.number_input("QA/QC Manager", min_value=0, max_value=2, key="quality_manager")
-qa_sal = st.sidebar.number_input("QA Manager Salary ($)", min_value=70000, max_value=150000, step=2500, key="qa_manager_salary")
+qa_sal = st.sidebar.number_input("QA Manager Salary ($)", min_value=90000, max_value=180000, step=2500, key="qa_manager_salary")
 
 admin_count = st.sidebar.number_input("Admin Staff (FTE)", min_value=0.0, max_value=5.0, step=0.5, key="admin_staff")
-admin_sal = st.sidebar.number_input("Admin Salary ($)", min_value=35000, max_value=80000, step=2500, key="admin_salary")
+admin_sal = st.sidebar.number_input("Admin Salary ($)", min_value=45000, max_value=100000, step=2500, key="admin_salary")
 
-benefits_pct = st.sidebar.slider("Benefits & Payroll Tax (%)", 20, 40, key="benefits_percent")
+benefits_pct = st.sidebar.slider("Benefits & Payroll Tax (%)", 25, 45, key="benefits_percent")
 
 # Test Portfolio & Pricing
 st.sidebar.subheader("🧪 Test Portfolio & Pricing")
@@ -227,7 +295,7 @@ def calculate_monthly_payment(principal, annual_rate, years):
 
 # Startup Costs
 initial_fitout = lab_size * fitout_cost
-equipment_down_payment = equipment_total * 0.2
+equipment_down_payment = purchased_equipment * 0.2  # Only for purchased equipment
 certification_costs = (st.session_state.nelap_certification_cost + 
                       st.session_state.state_certification_costs + 
                       st.session_state.quality_system_consultant)
@@ -236,7 +304,7 @@ total_startup = initial_fitout + equipment_down_payment + certification_costs + 
 
 # Monthly Fixed Costs
 monthly_rent = lab_size * monthly_rent_psf
-equipment_payment = calculate_monthly_payment(equipment_total * 0.8, financing_rate, financing_years)
+monthly_equipment_payments = monthly_lease_total + monthly_equipment_financing
 
 annual_payroll = (director_count * director_sal + 
                  scientist_count * scientist_sal + 
@@ -246,7 +314,7 @@ annual_payroll = (director_count * director_sal +
 monthly_payroll = annual_payroll * (1 + benefits_pct/100) / 12
 
 monthly_fixed = (monthly_rent + 
-                equipment_payment +
+                monthly_equipment_payments +
                 monthly_payroll +
                 st.session_state.utilities_monthly +
                 st.session_state.lab_cleaning +
@@ -437,7 +505,7 @@ st.subheader("💰 Monthly Cost Breakdown")
 cost_categories = {
     'Payroll & Benefits': monthly_payroll,
     'Facility Rent': monthly_rent,
-    'Equipment Financing': equipment_payment,
+    'Equipment Payments': monthly_equipment_payments,
     'Utilities & Cleaning': st.session_state.utilities_monthly + st.session_state.lab_cleaning,
     'Consumables & Reagents': st.session_state.reagents_monthly + st.session_state.labware_consumables,
     'Maintenance & Service': st.session_state.maintenance_contracts,
@@ -497,6 +565,16 @@ with col2:
     
     if avg_revenue_per_sample < 200:
         st.info("💰 Consider premium testing services to increase revenue/sample")
+    
+    # Equipment recommendations
+    if leased_equipment > purchased_equipment:
+        st.info("💡 High equipment lease costs - consider purchase vs. lease analysis")
+    
+    # Bay Area specific insights
+    if location == "California Bay Area":
+        st.warning("🏠 Bay Area: High salaries and rent - ensure premium pricing")
+        if avg_revenue_per_sample < 250:
+            st.error("💸 Bay Area labs need >$250/sample average to be viable")
 
 # Footer
 st.markdown("---")
@@ -505,6 +583,10 @@ st.markdown("""
 Validate all assumptions with current market data, equipment vendors, and regulatory requirements 
 before making business decisions.*
 
-**Key Sources**: Environmental testing market data, 
-salary surveys, and lab construction costs.
+**Key Sources**: California Bay Area laboratory director salaries: $170k-$220k, 
+environmental scientist salaries: $130k-$157k, 
+equipment costs and leasing options, and lab construction costs.
+
+**Equipment Leasing Note**: HPLC systems can be leased for ~$263/month on 60-month terms. 
+ICP-MS and IC systems are commonly leased to preserve capital and include maintenance coverage.
 """)
